@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'firebase_test_page.dart';
 
-void main() {
+
+// Connection of the firebase
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+
+
   const MyApp({super.key});
 
   // This widget is the root of your application.
@@ -72,7 +84,14 @@ class _WelcomeState extends State<Welcome> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              onPressed: () {},
+
+              // Test the firebase as guest it will ask for a message and
+              // will show that message to the firebase with timestamp
+              onPressed: () {
+                Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const FirebaseTestPage()),
+                );
+              },
               child: Text(
                 "Continue as Guest",
                 style: GoogleFonts.dmSerifText(

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "185880170660",
+    "project_id": "chefup-e9c65",
+    "storage_bucket": "chefup-e9c65.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:185880170660:android:2a5a986f8cd3eb5bdcd631",
+        "android_client_info": {
+          "package_name": "com.example.chefup"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCm6N66iZev5PbChk3SHaOgpPEu81tnSlk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
