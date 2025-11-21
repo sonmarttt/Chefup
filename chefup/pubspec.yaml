@@ -68,6 +68,11 @@ flutter:
     - pictures/logo.png
     - pictures/login.png
     - pictures/wavy.png
+    - pictures/discoveryFood.png
+    - pictures/beef_stew.png
+    - pictures/chicken.png
+    - pictures/choco_mousse.png
+    - pictures/strawberry_drink.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
