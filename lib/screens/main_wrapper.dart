@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'auth/welcome_screen.dart';
 import 'home/discovery_screen.dart';
+import 'home/chefRecom_screen.dart';
 import 'home/my_posts_screen.dart';
 import '../services/auth_service.dart';
 
@@ -21,6 +22,7 @@ class _MainWrapperState extends State<MainWrapper> {
   final List<Widget> _screens = [
     Placeholder(), // Saved (Placeholder)
     DiscoveryScreen(),
+    ChefRecScreen(),
     MyPostsScreen(),
   ];
 
@@ -66,16 +68,32 @@ class _MainWrapperState extends State<MainWrapper> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             IconButton(
-              icon: Icon(Icons.bookmark, color: _selectedIndex == 0 ? Colors.white : Colors.grey),
+              icon: Icon(
+                Icons.bookmark,
+                color: _selectedIndex == 0 ? Colors.white : Colors.grey,
+              ),
               onPressed: () => _onItemTapped(0),
             ),
             IconButton(
-              icon: Icon(Icons.home, color: _selectedIndex == 1 ? Colors.white : Colors.grey),
+              icon: Icon(
+                Icons.home,
+                color: _selectedIndex == 1 ? Colors.white : Colors.grey,
+              ),
               onPressed: () => _onItemTapped(1),
             ),
             IconButton(
-              icon: Icon(Icons.menu_book, color: _selectedIndex == 2 ? Colors.white : Colors.grey),
+              icon: Icon(
+                Icons.restaurant_menu,
+                color: _selectedIndex == 2 ? Colors.white : Colors.grey,
+              ),
               onPressed: () => _onItemTapped(2),
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.menu_book,
+                color: _selectedIndex == 3 ? Colors.white : Colors.grey,
+              ),
+              onPressed: () => _onItemTapped(3),
             ),
           ],
         ),
