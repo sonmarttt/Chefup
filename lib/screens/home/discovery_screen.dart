@@ -4,6 +4,7 @@ import '../../models/recipe_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/recipe_service.dart';
 import '../recipe/recipe_details_screen.dart';
+import 'dart:developer';
 
 class DiscoveryScreen extends StatefulWidget {
   const DiscoveryScreen({super.key});
@@ -17,6 +18,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    log('discovery building ');
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5), // Light grey background
       body: SafeArea(
@@ -50,12 +52,14 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 20,
+                                //TODO: replace with user profile picture
                                 backgroundImage: AssetImage(
                                   'pictures/logo.png',
                                 ), // Placeholder
                               ),
                               SizedBox(width: 15),
                               Text(
+                                //TODO: replace with user's name
                                 "Hello, Chef!",
                                 style: GoogleFonts.dmSerifText(
                                   fontSize: 20,
@@ -141,6 +145,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                           ),
                           child: Row(
                             children: [
+                              //Todo: fetch the categories from firebase
                               _buildTab("All", true),
                               _buildTab("Soup", false),
                               _buildTab("Drinks", false),
@@ -186,72 +191,33 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                   final recipes = snapshot.data ?? [];
 
                   if (recipes.isEmpty) {
-                    return SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Column(
-                        children: [
-                          GridView.count(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.symmetric(horizontal: 10),
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 15,
-                            mainAxisSpacing: 15,
-                            childAspectRatio: 0.75,
-                            children: [
-                              //logic to pass the recipe data to recipe details screen through firebase
-                              //it should iterate through the database and show every recipe
-                              _buildRecipe(
-                                "Beef Stew",
-                                56,
-                                "pictures/beef_stew.png",
-                                onTap: () {
-                                  final sample = RecipeModel(
-                                    //change based on firebase data
-                                    id: 'sample-beef-stew',
-                                    title: 'Beef Stew',
-                                    description:
-                                        'A hearty and delicious beef stew perfect for cold days.',
-                                    ingredients: ['random ingredient'],
-                                    steps: ['1. Do this', '2. Do that'],
-                                    category: 'chicken',
-                                    cookTimeMinutes: 56,
-                                    imageUrl: 'pictures/beef_stew.png',
-                                    authorId: 'idk',
-                                    authorName: 'some name',
-                                    createdAt: Timestamp.now(),
-                                    updatedAt: Timestamp.now(),
-                                  );
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          RecipeDetailsScreen(recipe: sample),
-                                    ),
-                                  );
-                                },
-                              ),
-                              //dummy data for visual purposes
-                              _buildRecipe(
-                                'Creamy Mushroom Risotto',
-                                342,
-                                'pictures/chicken.png',
-                                onTap: () {
-                                  // Navigate to recipe detail
-                                },
-                              ),
-
-                              _buildRecipe(
-                                'Chocolate Lava Cake',
-                                587,
-                                'pictures/choco_mousse.png',
-                                onTap: () {
-                                  // Navigate to recipe detail
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+                    return GridView.builder(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.75,
+                        crossAxisSpacing: 15,
+                        mainAxisSpacing: 15,
                       ),
+                      itemCount: recipes.length,
+                      itemBuilder: (context, index) {
+                        final recipe = recipes[index];
+                        return _buildRecipe(
+                          //fetch the information from firebase
+                          recipe.title,
+                          0,
+                          recipe.imageUrl,
+                          isNetworkImage: true,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    RecipeDetailsScreen(recipe: recipe),
+                              ),
+                            );
+                          },
+                        );
+                      },
                     );
                   }
 
@@ -263,6 +229,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                       crossAxisSpacing: 15,
                       mainAxisSpacing: 15,
                     ),
+                    //fetches from database
                     itemCount: recipes.length,
                     itemBuilder: (context, index) {
                       final recipe = recipes[index];
@@ -387,6 +354,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     int likes,
     String imagePath, {
     VoidCallback? onTap,
+    bool isNetworkImage = false, // Add this parameter
   }) {
     final content = Container(
       height: 250,
@@ -413,19 +381,36 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
                 ),
-                child: Image.asset(
-                  imagePath,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+                child: isNetworkImage
+                    ? Image.network(
+                        imagePath,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 180,
+                          color: Colors.grey[300],
+                          child: Icon(Icons.broken_image),
+                        ),
+                      )
+                    : Image.asset(
+                        imagePath,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 180,
+                          color: Colors.grey[300],
+                          child: Icon(Icons.broken_image),
+                        ),
+                      ),
               ),
               Positioned(
                 top: 8,
                 right: 8,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Handle save action
+                    //TODO: add in the saved
                   },
                   style: ElevatedButton.styleFrom(
                     shape: CircleBorder(),

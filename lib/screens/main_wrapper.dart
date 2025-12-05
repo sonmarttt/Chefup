@@ -1,8 +1,10 @@
+import 'package:chefup/screens/home/saved_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'auth/welcome_screen.dart';
 import 'home/discovery_screen.dart';
+import 'home/saved_screen.dart';
 import 'home/chefRecom_screen.dart';
 import 'home/my_posts_screen.dart';
 import '../services/auth_service.dart';
@@ -76,14 +78,14 @@ class _MainWrapperState extends State<MainWrapper> {
             ),
             IconButton(
               icon: Icon(
-                Icons.home,
+                Icons.restaurant_menu,
                 color: _selectedIndex == 1 ? Colors.white : Colors.grey,
               ),
               onPressed: () => _onItemTapped(1),
             ),
             IconButton(
               icon: Icon(
-                Icons.restaurant_menu,
+                Icons.list,
                 color: _selectedIndex == 2 ? Colors.white : Colors.grey,
               ),
               onPressed: () => _onItemTapped(2),
