@@ -4,13 +4,13 @@
 
 import 'dart:convert';
 
-List<Welcome> fruitFromJson(String str) =>
-    List<Welcome>.from(json.decode(str).map((x) => Welcome.fromJson(x)));
+List<Fruits> fruitFromJson(String str) =>
+    List<Fruits>.from(json.decode(str).map((x) => Fruits.fromJson(x)));
 
-String welcomeToJson(List<Welcome> data) =>
+String fruitsToJson(List<Fruits> data) =>
     json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
-class Welcome {
+class Fruits {
   String name;
   int id;
   String family;
@@ -18,7 +18,7 @@ class Welcome {
   String genus;
   Nutritions nutritions;
 
-  Welcome({
+  Fruits({
     required this.name,
     required this.id,
     required this.family,
@@ -27,7 +27,7 @@ class Welcome {
     required this.nutritions,
   });
 
-  factory Welcome.fromJson(Map<String, dynamic> json) => Welcome(
+  factory Fruits.fromJson(Map<String, dynamic> json) => Fruits(
     name: json["name"],
     id: json["id"],
     family: json["family"],
@@ -47,11 +47,11 @@ class Welcome {
 }
 
 class Nutritions {
-  int calories;
-  int fat;
-  int sugar;
-  int carbohydrates;
-  int protein;
+  double calories;
+  double fat;
+  double sugar;
+  double carbohydrates;
+  double protein;
 
   Nutritions({
     required this.calories,
@@ -62,11 +62,11 @@ class Nutritions {
   });
 
   factory Nutritions.fromJson(Map<String, dynamic> json) => Nutritions(
-    calories: json["calories"],
-    fat: json["fat"],
-    sugar: json["sugar"],
-    carbohydrates: json["carbohydrates"],
-    protein: json["protein"],
+    calories: json["calories"]?.toDouble(),
+    fat: json["fat"]?.toDouble(),
+    sugar: json["sugar"]?.toDouble(),
+    carbohydrates: json["carbohydrates"]?.toDouble(),
+    protein: json["protein"]?.toDouble(),
   );
 
   Map<String, dynamic> toJson() => {

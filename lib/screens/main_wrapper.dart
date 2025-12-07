@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'auth/welcome_screen.dart';
 import 'home/discovery_screen.dart';
 import 'home/saved_screen.dart';
-import 'home/chefRecom_screen.dart';
+import 'home/fruit_screen.dart';
 import 'home/my_posts_screen.dart';
 import '../services/auth_service.dart';
 
@@ -22,9 +22,9 @@ class _MainWrapperState extends State<MainWrapper> {
   final AuthService _authService = AuthService();
 
   final List<Widget> _screens = [
-    Placeholder(), // Saved (Placeholder)
+    SavedScreen(),
     DiscoveryScreen(),
-    ChefRecScreen(),
+    FruitScreen(),
     MyPostsScreen(),
   ];
 

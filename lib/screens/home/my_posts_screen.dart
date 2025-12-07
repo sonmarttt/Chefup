@@ -6,6 +6,7 @@ import '../../services/recipe_service.dart';
 import '../recipe/add_recipe_screen.dart';
 import '../recipe/recipe_details_screen.dart';
 import '../../services/auth_service.dart';
+import 'setting_screen.dart';
 
 class MyPostsScreen extends StatefulWidget {
   const MyPostsScreen({super.key});
@@ -56,11 +57,22 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                           ),
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                radius: 20,
-                                backgroundImage: AssetImage(
-                                  'pictures/logo.png',
-                                ), // Placeholder
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SettingsScreen(),
+                                    ),
+                                  );
+                                },
+                                child: CircleAvatar(
+                                  radius: 20,
+                                  //TODO: replace with user profile picture
+                                  backgroundImage: AssetImage(
+                                    'pictures/logo.png',
+                                  ), // Placeholder
+                                ),
                               ),
                               SizedBox(width: 15),
                               Text(
@@ -86,7 +98,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                                 right: 10,
                               ),
                               child: Container(
-                                height: 45,
+                                height: 50,
                                 width: 300,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
@@ -100,6 +112,8 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                                   ],
                                 ),
                                 child: TextField(
+                                  textAlign: TextAlign.left,
+                                  textAlignVertical: TextAlignVertical.center,
                                   decoration: InputDecoration(
                                     hintText: "Search",
                                     hintStyle: GoogleFonts.dmSerifText(

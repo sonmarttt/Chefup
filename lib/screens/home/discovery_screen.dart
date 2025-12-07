@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/recipe_service.dart';
 import '../recipe/recipe_details_screen.dart';
 import 'dart:developer';
+import 'setting_screen.dart';
 
 class DiscoveryScreen extends StatefulWidget {
   const DiscoveryScreen({super.key});
@@ -50,12 +51,22 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                           ),
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                radius: 20,
-                                //TODO: replace with user profile picture
-                                backgroundImage: AssetImage(
-                                  'pictures/logo.png',
-                                ), // Placeholder
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SettingsScreen(),
+                                    ),
+                                  );
+                                },
+                                child: CircleAvatar(
+                                  radius: 20,
+                                  //TODO: replace with user profile picture
+                                  backgroundImage: AssetImage(
+                                    'pictures/logo.png',
+                                  ), // Placeholder
+                                ),
                               ),
                               SizedBox(width: 15),
                               Text(
@@ -82,7 +93,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                 right: 10,
                               ),
                               child: Container(
-                                height: 45,
+                                height: 50,
                                 width: 300,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
@@ -96,6 +107,8 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                   ],
                                 ),
                                 child: TextField(
+                                  textAlign: TextAlign.left,
+                                  textAlignVertical: TextAlignVertical.center,
                                   decoration: InputDecoration(
                                     hintText: "Search",
                                     hintStyle: GoogleFonts.dmSerifText(
@@ -125,7 +138,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                     border: InputBorder.none,
                                     contentPadding: EdgeInsets.symmetric(
                                       horizontal: 20,
-                                      vertical: 15,
+                                      //vertical: 15,
                                     ),
                                   ),
                                 ),
