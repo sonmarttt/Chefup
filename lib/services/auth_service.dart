@@ -70,4 +70,24 @@ class AuthService {
   Future<void> sendPasswordResetEmail(String email) async {
     await _auth.sendPasswordResetEmail(email: email);
   }
+
+  // Check if user is Guest
+  bool get isGuest {
+    return _auth.currentUser?.isAnonymous ?? true;
+  }
+
+  // Check if user is Admin
+  Future<bool> isAdmin(String? uid) async {
+    if (uid == null) return false;
+    try {
+      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      if (doc.exists && doc.data() != null) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        return data['role'] == 'admin';
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
 }

@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -25,7 +26,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   String _selectedCategory = 'Chicken'; // Default
   final List<String> _categories = ['Chicken', 'Soup', 'Drinks', 'Baked', 'Beef', 'Seafood', 'Vegetarian'];
 
-  File? _imageFile;
+  XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
   final RecipeService _recipeService = RecipeService();
   bool _isLoading = false;
@@ -34,13 +35,23 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _imageFile = pickedFile;
       });
     }
   }
 
   void _postRecipe() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Guest check
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.isAnonymous) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Guests cannot post recipes. Please register.')),
+      );
+      return;
+    }
+
     if (_imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please upload an image')),
@@ -53,10 +64,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     });
 
     try {
-      final User? user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception("User not logged in");
-
-      // Upload Image
+      // Upload Image (pass XFile directly)
       String imageUrl = await _recipeService.uploadRecipeImage(_imageFile!, user.uid);
 
       // Create Recipe Model
@@ -100,6 +108,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Image provider based on platform
+    ImageProvider? imageProvider;
+    if (_imageFile != null) {
+      if (kIsWeb) {
+        imageProvider = NetworkImage(_imageFile!.path);
+      } else {
+        imageProvider = FileImage(File(_imageFile!.path));
+      }
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
@@ -128,8 +146,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     color: Colors.grey[900],
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.grey[800]!),
-                    image: _imageFile != null
-                        ? DecorationImage(image: FileImage(_imageFile!), fit: BoxFit.cover)
+                    image: imageProvider != null
+                        ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
                         : null,
                   ),
                   child: _imageFile == null
@@ -145,6 +163,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         style: GoogleFonts.dmSerifText(
                           color: Colors.white,
                           fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),

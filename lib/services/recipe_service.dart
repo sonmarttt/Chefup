@@ -1,6 +1,7 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/recipe_model.dart';
 
 class RecipeService {
@@ -8,15 +9,19 @@ class RecipeService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Upload Image
-  Future<String> uploadRecipeImage(File image, String uid) async {
+  Future<String> uploadRecipeImage(XFile image, String uid) async {
     try {
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
       Reference ref = _storage.ref().child('recipeImages/$uid/$fileName.jpg');
 
-      // Upload the file and wait for it to complete
-      await ref.putFile(image);
+      // specific metadata for correct mime type handling
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
 
-      // Get the download URL from the SAME reference
+      // Use putData with readAsBytes for cross-platform support (Web & Mobile)
+      // This avoids using dart:io File which crashes on Web
+      Uint8List fileBytes = await image.readAsBytes();
+      await ref.putData(fileBytes, metadata);
+
       return await ref.getDownloadURL();
     } catch (e) {
       rethrow;
@@ -26,15 +31,26 @@ class RecipeService {
   // Create Recipe
   Future<void> createRecipe(RecipeModel recipe) async {
     try {
-      // We use the recipe.id if it's set, or let Firestore generate one if we passed an empty one?
-
+      // Create a new document ref to get an ID
       DocumentReference docRef = _firestore.collection('recipes').doc();
 
-      // Create a map from the recipe but with the new ID
-      Map<String, dynamic> data = recipe.toMap();
-      data['id'] = docRef.id; // Ensure the ID in the document matches the doc ID
+      // Update the recipe with the generated ID
+      RecipeModel newRecipe = RecipeModel(
+        id: docRef.id,
+        title: recipe.title,
+        description: recipe.description,
+        ingredients: recipe.ingredients,
+        steps: recipe.steps,
+        category: recipe.category,
+        cookTimeMinutes: recipe.cookTimeMinutes,
+        imageUrl: recipe.imageUrl,
+        authorId: recipe.authorId,
+        authorName: recipe.authorName,
+        createdAt: recipe.createdAt,
+        updatedAt: recipe.updatedAt,
+      );
 
-      await docRef.set(data);
+      await docRef.set(newRecipe.toMap());
     } catch (e) {
       rethrow;
     }

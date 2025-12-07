@@ -349,18 +349,31 @@ class _SavedScreenState extends State<SavedScreen> {
               topLeft: Radius.circular(15),
               bottomLeft: Radius.circular(15),
             ),
-            child: Image.asset(
-              imagePath,
-              height: 130,
-              width: 130,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                height: 130,
-                width: 130,
-                color: Colors.grey[300],
-                child: Icon(Icons.broken_image),
-              ),
-            ),
+            child: imagePath.startsWith('http')
+                ? Image.network(
+                    imagePath,
+                    height: 130,
+                    width: 130,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 130,
+                      width: 130,
+                      color: Colors.grey[300],
+                      child: Icon(Icons.broken_image),
+                    ),
+                  )
+                : Image.asset(
+                    imagePath,
+                    height: 130,
+                    width: 130,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 130,
+                      width: 130,
+                      color: Colors.grey[300],
+                      child: Icon(Icons.broken_image),
+                    ),
+                  ),
           ),
           // Content section
           Expanded(

@@ -6,6 +6,8 @@ import '../../services/recipe_service.dart';
 import '../recipe/recipe_details_screen.dart';
 import 'dart:developer';
 import 'setting_screen.dart';
+import '../../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DiscoveryScreen extends StatefulWidget {
   const DiscoveryScreen({super.key});
@@ -16,6 +18,26 @@ class DiscoveryScreen extends StatefulWidget {
 
 class _DiscoveryScreenState extends State<DiscoveryScreen> {
   final RecipeService _recipeService = RecipeService();
+  final AuthService _authService = AuthService();
+  bool _isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdmin();
+  }
+
+  Future<void> _checkAdmin() async {
+    bool admin = await _authService.isAdmin(FirebaseAuth.instance.currentUser?.uid);
+    if (mounted) {
+      setState(() {
+        _isAdmin = admin;
+      });
+      if (_isAdmin) {
+        log('Current user is ADMIN');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
