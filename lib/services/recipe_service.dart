@@ -82,4 +82,45 @@ class RecipeService {
       }).toList();
     });
   }
+  // Save Recipe
+  Future<void> saveRecipe(String uid, String recipeId) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('savedRecipes')
+          .doc(recipeId)
+          .set({
+        'savedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Unsave Recipe
+  Future<void> unsaveRecipe(String uid, String recipeId) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('savedRecipes')
+          .doc(recipeId)
+          .delete();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Get Saved Recipe IDs Stream
+  Stream<List<String>> getSavedRecipeIds(String uid) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('savedRecipes')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => doc.id).toList();
+    });
+  }
 }

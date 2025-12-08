@@ -23,7 +23,7 @@ class _SavedScreenState extends State<SavedScreen> {
   Widget build(BuildContext context) {
     if (_uid == null) {
       return Scaffold(
-        body: Center(child: Text("Please login to see your posts")),
+        body: Center(child: Text("Please login to see your saved recipes")),
       );
     }
 
@@ -36,7 +36,6 @@ class _SavedScreenState extends State<SavedScreen> {
             Container(
               height: 190,
               width: MediaQuery.of(context).size.width,
-
               decoration: BoxDecoration(
                 color: Color.fromRGBO(24, 25, 28, 100),
                 borderRadius: BorderRadius.only(
@@ -69,7 +68,6 @@ class _SavedScreenState extends State<SavedScreen> {
                                 },
                                 child: CircleAvatar(
                                   radius: 20,
-                                  //TODO: replace with user profile picture
                                   backgroundImage: AssetImage(
                                     'pictures/logo.png',
                                   ), // Placeholder
@@ -80,7 +78,6 @@ class _SavedScreenState extends State<SavedScreen> {
                                 "Hello, Chef!",
                                 style: GoogleFonts.dmSerifText(
                                   fontSize: 20,
-                                  //fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                               ),
@@ -186,108 +183,66 @@ class _SavedScreenState extends State<SavedScreen> {
             ),
             SizedBox(height: 20),
             Expanded(
-              child: StreamBuilder<List<RecipeModel>>(
-                stream: _recipeService.getAllRecipes(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text("Error loading recipes"));
-                  }
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+              child: StreamBuilder<List<String>>(
+                stream: _recipeService.getSavedRecipeIds(_uid!),
+                builder: (context, savedSnapshot) {
+                  if (savedSnapshot.hasError) {
+                    return Center(child: Text("Error loading saved recipes"));
                   }
 
-                  final recipes = snapshot.data ?? [];
+                  final savedIds = (savedSnapshot.data ?? []).toSet();
 
-                  if (recipes.isEmpty) {
-                    return SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      child: Column(
-                        children: [
-                          //logic to pass the recipe data to recipe details screen through firebase
-                          //it should iterate through the database and show every recipe
-                          _buildRecipe(
-                            "Beef Stew",
-                            56,
-                            "pictures/beef_stew.png",
-                            "A hearty comfort meal featuring tender chunks of beef with vegetables slow-cooked in a rich, savory sauce. Perfect for cold winter nights. The slow cooking process...",
-                            onTap: () {
-                              final sample = RecipeModel(
-                                //change based on firebase data
-                                //pass the fields so it can be accessed in details screen
-                                //just need the picutre, category, likes number, username, username profile, cook time, title, description, ingredients, steps
-                                id: 'sample-beef-stew',
-                                title: 'Beef Stew',
-                                description:
-                                    'A hearty and delicious beef stew perfect for cold days.',
-                                ingredients: ['random ingredient'],
-                                steps: ['1. Do this', '2. Do that'],
-                                category: 'chicken',
-                                cookTimeMinutes: 56,
-                                imageUrl: 'pictures/beef_stew.png',
-                                authorId: 'idk',
-                                authorName: 'some name',
-                                createdAt: Timestamp.now(),
-                                updatedAt: Timestamp.now(),
-                              );
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      RecipeDetailsScreen(recipe: sample),
-                                ),
-                              );
-                            },
-                          ),
-                          SizedBox(height: 15),
-                          //dummy data for visual purposes
-                          _buildRecipe(
-                            'Smoked Salmon...',
-                            112,
-                            'pictures/chicken.png',
-                            'A perfect light and smoky fish dinner for the weeknight. With cheesy mashed potatoes, this delicious recipe comes together in so...',
-                            onTap: () {
-                              // Navigate to recipe detail
-                            },
-                          ),
-                          SizedBox(height: 15),
-                          _buildRecipe(
-                            'Raspberry Ch...',
-                            50,
-                            'pictures/choco_mousse.png',
-                            'A delightfully sweet dessert with the tart sweetness of fresh raspberries. This impressive treat served over crushed ice is a...',
-                            onTap: () {
-                              // Navigate to recipe detail
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  }
+                  return StreamBuilder<List<RecipeModel>>(
+                    stream: _recipeService.getAllRecipes(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(child: Text("Error loading recipes"));
+                      }
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      }
 
-                  return ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    itemCount: recipes.length,
-                    itemBuilder: (context, index) {
-                      final recipe = recipes[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 15),
-                        //the information should be fetched from firebase
-                        child: _buildRecipe(
-                          recipe.title,
-                          203, //the number of likes
-                          recipe.imageUrl,
-                          recipe.description,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    RecipeDetailsScreen(recipe: recipe),
-                              ),
-                            );
-                          },
-                        ),
+                      final allRecipes = snapshot.data ?? [];
+                      final savedRecipes = allRecipes
+                          .where((r) => savedIds.contains(r.id))
+                          .toList();
+
+                      if (savedRecipes.isEmpty) {
+                        return Center(
+                          child: Text(
+                            "No saved recipes yet",
+                            style: GoogleFonts.dmSerifText(
+                              fontSize: 18,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        itemCount: savedRecipes.length,
+                        itemBuilder: (context, index) {
+                          final recipe = savedRecipes[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 15),
+                            child: _buildRecipe(
+                              recipe.title,
+                              0, // likes placeholder
+                              recipe.imageUrl,
+                              recipe.description,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        RecipeDetailsScreen(recipe: recipe),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
                       );
                     },
                   );
@@ -295,25 +250,6 @@ class _SavedScreenState extends State<SavedScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTab(String text, bool isSelected) {
-    return Container(
-      height: 35,
-      margin: EdgeInsets.only(right: 15),
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 7),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFEAEAEA) : Colors.grey[800],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: GoogleFonts.dmSerifText(
-          color: isSelected ? Colors.black : Colors.white,
-          fontWeight: FontWeight.bold,
         ),
       ),
     );

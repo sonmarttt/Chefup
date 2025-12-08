@@ -2,15 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/recipe_model.dart';
 import 'dart:developer';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/recipe_service.dart';
 
-class RecipeDetailsScreen extends StatelessWidget {
+class RecipeDetailsScreen extends StatefulWidget {
   final RecipeModel recipe;
 
   const RecipeDetailsScreen({super.key, required this.recipe});
 
   @override
+  State<RecipeDetailsScreen> createState() => _RecipeDetailsScreenState();
+}
+
+class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
+  final RecipeService _recipeService = RecipeService();
+
+  @override
   Widget build(BuildContext context) {
     log('RecipeDetailsScreen building ');
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       backgroundColor: Color.fromRGBO(24, 25, 28, 100),
       body: SafeArea(
@@ -26,7 +37,7 @@ class RecipeDetailsScreen extends StatelessWidget {
                       bottomRight: Radius.circular(40),
                     ),
                     child: Image.network(
-                      recipe.imageUrl,
+                      widget.recipe.imageUrl,
                       height: 380,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -79,22 +90,61 @@ class RecipeDetailsScreen extends StatelessWidget {
                   Positioned(
                     top: 20,
                     right: 15,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        "Save",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    child: StreamBuilder<List<String>>(
+                      stream: user != null && !user.isAnonymous
+                          ? _recipeService.getSavedRecipeIds(user.uid)
+                          : Stream.value([]),
+                      builder: (context, snapshot) {
+                        final savedIds = (snapshot.data ?? []).toSet();
+                        final isSaved = savedIds.contains(widget.recipe.id);
+
+                        return GestureDetector(
+                          onTap: () async {
+                            if (user == null || user.isAnonymous) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text("Please log in to save recipes.")),
+                              );
+                              return;
+                            }
+
+                            try {
+                              if (isSaved) {
+                                await _recipeService.unsaveRecipe(
+                                    user.uid, widget.recipe.id);
+                              } else {
+                                await _recipeService.saveRecipe(
+                                    user.uid, widget.recipe.id);
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text("Error updating save: $e")),
+                                );
+                              }
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSaved ? Colors.grey[700] : Colors.green,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              isSaved ? "Saved" : "Save",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -109,7 +159,7 @@ class RecipeDetailsScreen extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          recipe.category,
+                          widget.recipe.category,
                           style: GoogleFonts.dmSerifText(
                             color: Colors.grey,
                             fontSize: 14,
@@ -119,7 +169,7 @@ class RecipeDetailsScreen extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      recipe.title,
+                      widget.recipe.title,
                       style: GoogleFonts.dmSerifText(
                         color: Colors.white,
                         fontSize: 32,
@@ -137,7 +187,7 @@ class RecipeDetailsScreen extends StatelessWidget {
                         ),
                         SizedBox(width: 10),
                         Text(
-                          recipe.authorName,
+                          widget.recipe.authorName,
                           style: GoogleFonts.dmSerifText(
                             color: Colors.white,
                             fontSize: 18,
@@ -173,7 +223,7 @@ class RecipeDetailsScreen extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    "${recipe.cookTimeMinutes} Hours",
+                                    "${widget.recipe.cookTimeMinutes} Hours",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
@@ -197,7 +247,7 @@ class RecipeDetailsScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 10),
                     Text(
-                      recipe.description,
+                      widget.recipe.description,
                       style: GoogleFonts.dmSerifText(
                         color: Colors.grey,
                         fontSize: 14,
@@ -214,7 +264,7 @@ class RecipeDetailsScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 10),
-                    ...recipe.ingredients.map(
+                    ...widget.recipe.ingredients.map(
                       (ingredient) => Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: Row(
@@ -244,7 +294,7 @@ class RecipeDetailsScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 10),
-                    ...recipe.steps.asMap().entries.map(
+                    ...widget.recipe.steps.asMap().entries.map(
                       (entry) => Padding(
                         padding: const EdgeInsets.only(bottom: 15.0),
                         child: Row(
