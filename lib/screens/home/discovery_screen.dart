@@ -28,7 +28,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   }
 
   Future<void> _checkAdmin() async {
-    bool admin = await _authService.isAdmin(FirebaseAuth.instance.currentUser?.uid);
+    bool admin = await _authService.isAdmin(
+      FirebaseAuth.instance.currentUser?.uid,
+    );
     if (mounted) {
       setState(() {
         _isAdmin = admin;
@@ -56,7 +58,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                 color: Color.fromRGBO(24, 25, 28, 100),
                 borderRadius: BorderRadius.only(
                   bottomRight: Radius.circular(140),
-                ), // radius in pixels
+                ),
               ),
               child: Stack(
                 children: [
@@ -389,7 +391,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     int likes,
     String imagePath, {
     VoidCallback? onTap,
-    bool isNetworkImage = false, // Add this parameter
+    bool isNetworkImage = false,
   }) {
     final content = Container(
       height: 250,

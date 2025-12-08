@@ -28,7 +28,7 @@ class _SavedScreenState extends State<SavedScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // Light grey background
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: Column(
           children: [
@@ -41,7 +41,7 @@ class _SavedScreenState extends State<SavedScreen> {
                 color: Color.fromRGBO(24, 25, 28, 100),
                 borderRadius: BorderRadius.only(
                   bottomRight: Radius.circular(140),
-                ), // radius in pixels
+                ),
               ),
               child: Stack(
                 children: [
@@ -185,7 +185,6 @@ class _SavedScreenState extends State<SavedScreen> {
               ),
             ),
             SizedBox(height: 20),
-            // List of Recipes
             Expanded(
               child: StreamBuilder<List<RecipeModel>>(
                 stream: _recipeService.getAllRecipes(),

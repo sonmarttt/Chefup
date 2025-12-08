@@ -1,6 +1,13 @@
+import 'package:chefup/screens/home/faq_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'aboutUs_screen.dart';
+import 'faq_screen.dart';
+import 'privacy_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'profileDetails_screen.dart';
+import 'changePass_screen.dart';
+import 'package:chefup/screens/auth/login_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -151,6 +158,11 @@ class SettingsScreen extends StatelessWidget {
                             title: "Profile Details",
                             onTap: () {
                               //todo: show profile details: username and email
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => ProfielDetailsScreen(),
+                                ),
+                              );
                             },
                           ),
                           Divider(
@@ -163,6 +175,11 @@ class SettingsScreen extends StatelessWidget {
                             title: "Change Password",
                             onTap: () {
                               //todo: change password
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => ChangepassScreen(),
+                                ),
+                              );
                             },
                           ),
                         ],
@@ -186,9 +203,15 @@ class SettingsScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           _buildSettingsItem(
-                            icon: Icons.help_outline,
-                            title: "Help",
-                            onTap: () {},
+                            icon: Icons.privacy_tip_outlined,
+                            title: "Privacy Policy",
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => PrivacyScreen(),
+                                ),
+                              );
+                            },
                           ),
                           Divider(
                             height: 1,
@@ -214,7 +237,13 @@ class SettingsScreen extends StatelessWidget {
                           _buildSettingsItem(
                             icon: Icons.question_answer_outlined,
                             title: "FAQ",
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => FAQScreen(),
+                                ),
+                              );
+                            },
                           ),
                           Divider(
                             height: 1,
@@ -226,8 +255,14 @@ class SettingsScreen extends StatelessWidget {
                             title: "Log Out",
                             iconColor: Colors.red,
                             textColor: Colors.red,
-                            onTap: () {
-                              //todo: logout
+                            onTap: () async {
+                              await FirebaseAuth.instance.signOut();
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                  builder: (context) => LoginScreen(),
+                                ),
+                                    (route) => false,
+                              );
                             },
                           ),
                         ],

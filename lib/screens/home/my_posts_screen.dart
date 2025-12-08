@@ -156,28 +156,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                           padding: const EdgeInsets.only(left: 10, right: 10),
                           child: Row(
                             children: [
-                              GestureDetector(
-                                onTap: () async {
-                                  await FirebaseAuth.instance.signOut();
-                                  // MainWrapper stream will handle navigation
-                                },
-                                child: Container(
-                                  margin: EdgeInsets.only(right: 10),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 15,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.redAccent,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Icon(
-                                    Icons.logout,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
+                              
                               GestureDetector(
                                 onTap: () {
                                   Navigator.push(
