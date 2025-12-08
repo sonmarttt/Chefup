@@ -20,6 +20,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   final RecipeService _recipeService = RecipeService();
   final AuthService _authService = AuthService();
   bool _isAdmin = false;
+  String _selectedCategory = "All";
 
   @override
   void initState() {
@@ -172,24 +173,82 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                         ),
                         SizedBox(height: 20),
 
-                        // Tabs (Visual only for now)
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          padding: EdgeInsets.only(
-                            left: 10,
-                            right: 10,
-                            bottom: 20,
-                          ),
-                          child: Row(
-                            children: [
-                              //Todo: fetch the categories from firebase
-                              _buildTab("All", true),
-                              _buildTab("Soup", false),
-                              _buildTab("Drinks", false),
-                              _buildTab("Baked", false),
-                              _buildTab("Cooked", false),
-                            ],
-                          ),
+                        StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('recipes')
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return SizedBox(height: 35);
+                            }
+                            Set<String> categories = {"All"};
+                            for (var doc in snapshot.data!.docs) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              if (data['category'] != null &&
+                                  data['category'].toString().isNotEmpty) {
+                                categories.add(data['category'].toString());
+                              }
+                            }
+                            List<String> category = categories.toList();
+
+                            return SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              padding: EdgeInsets.only(
+                                left: 10,
+                                right: 10,
+                                bottom: 20,
+                              ),
+                              child: Row(
+                                children: categories
+                                    .toList()
+                                    .asMap()
+                                    .entries
+                                    .map((entry) {
+                                      int index = entry.key;
+                                      String category = entry.value;
+                                      bool isSelected =
+                                          _selectedCategory == category;
+                                      bool isLast =
+                                          index == categories.length - 1;
+                                      return GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedCategory = category;
+                                          });
+                                        },
+                                        child: Container(
+                                          height: 35,
+                                          margin: EdgeInsets.only(
+                                            right: isLast ? 100 : 15,
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 7,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? const Color(0xFFEAEAEA)
+                                                : Colors.grey[800],
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            category,
+                                            style: GoogleFonts.dmSerifText(
+                                              color: isSelected
+                                                  ? Colors.black
+                                                  : Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    })
+                                    .toList(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -228,33 +287,15 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                   final recipes = snapshot.data ?? [];
 
                   if (recipes.isEmpty) {
-                    return GridView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.75,
-                        crossAxisSpacing: 15,
-                        mainAxisSpacing: 15,
+                    return Container(
+                      alignment: Alignment.center,
+                      child: Text(
+                        "No recipes found.",
+                        style: GoogleFonts.dmSerifText(
+                          fontSize: 18,
+                          color: Colors.grey,
+                        ),
                       ),
-                      itemCount: recipes.length,
-                      itemBuilder: (context, index) {
-                        final recipe = recipes[index];
-                        return _buildRecipe(
-                          //fetch the information from firebase
-                          recipe.title,
-                          0,
-                          recipe.imageUrl,
-                          isNetworkImage: true,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    RecipeDetailsScreen(recipe: recipe),
-                              ),
-                            );
-                          },
-                        );
-                      },
                     );
                   }
 
@@ -332,6 +373,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                       style: GoogleFonts.dmSerifText(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
+                                        color: Colors.black,
                                       ),
                                     ),
                                     SizedBox(height: 5),
@@ -340,13 +382,17 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                          "${recipe.cookTimeMinutes} min",
+                                          "${recipe.cookTimeMinutes} Hours",
                                           style: GoogleFonts.dmSerifText(
                                             fontSize: 12,
                                             color: Colors.grey,
                                           ),
                                         ),
-                                        Icon(Icons.favorite_border, size: 16),
+                                        Icon(
+                                          Icons.bookmarks_outlined,
+                                          size: 16,
+                                          color: Colors.black,
+                                        ),
                                       ],
                                     ),
                                   ],
@@ -384,124 +430,5 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildRecipe(
-    String name,
-    int likes,
-    String imagePath, {
-    VoidCallback? onTap,
-    bool isNetworkImage = false,
-  }) {
-    final content = Container(
-      height: 250,
-      width: 250,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 2,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-                child: isNetworkImage
-                    ? Image.network(
-                        imagePath,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          height: 180,
-                          color: Colors.grey[300],
-                          child: Icon(Icons.broken_image),
-                        ),
-                      )
-                    : Image.asset(
-                        imagePath,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          height: 180,
-                          color: Colors.grey[300],
-                          child: Icon(Icons.broken_image),
-                        ),
-                      ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: ElevatedButton(
-                  onPressed: () {
-                    //TODO: add in the saved
-                  },
-                  style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(8),
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                  ),
-                  child: Icon(Icons.bookmark, color: Colors.black, size: 20),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(14.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    name,
-                    style: GoogleFonts.dmSerifText(
-                      fontSize: 16,
-                      color: Colors.black,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  likes.toString(),
-                  style: GoogleFonts.dmSerifText(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(width: 4),
-                GestureDetector(
-                  onTap: () {
-                    // Handle like action
-                    print('liked');
-                  },
-                  child: Icon(Icons.favorite, color: Colors.black, size: 20),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (onTap != null) {
-      return GestureDetector(onTap: onTap, child: content);
-    }
-
-    return content;
   }
 }
