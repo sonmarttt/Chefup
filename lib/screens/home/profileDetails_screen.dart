@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/auth_service.dart';
 
 class ProfielDetailsScreen extends StatefulWidget {
   const ProfielDetailsScreen({super.key});
@@ -12,13 +14,33 @@ class _ProfielDetailsScreenState extends State<ProfielDetailsScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   bool _isEditing = false;
+  final AuthService _authService = AuthService();
+  final User? _currentUser = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
-    //todo: load the actuayl info from firebase
-    _usernameController.text = "John";
-    _emailController.text = "email@example.com";
+    super.initState();
+    _loadUserData();
   }
+
+  Future<void> _loadUserData() async {
+    if (_currentUser != null) {
+      final userData = await _authService.getUserDetails(_currentUser!.uid);
+      if (userData != null) {
+        setState(() {
+          _usernameController.text = userData['displayName'] ?? '';
+          _emailController.text = userData['email'] ?? '';
+        });
+      } else {
+        // Fallback to Auth data
+        setState(() {
+          _usernameController.text = _currentUser!.displayName ?? '';
+          _emailController.text = _currentUser!.email ?? '';
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -26,21 +48,44 @@ class _ProfielDetailsScreenState extends State<ProfielDetailsScreen> {
     super.dispose();
   }
 
-  void _saveChanges() {
-    // TODO: Save changes to Firebase
-    setState(() {
-      _isEditing = false;
-    });
+  Future<void> _saveChanges() async {
+    if (_currentUser == null) return;
+
+    try {
+      if (_usernameController.text.isNotEmpty) {
+        await _authService.updateDisplayName(_usernameController.text.trim());
+      }
+      if (_emailController.text.isNotEmpty &&
+          _emailController.text != _currentUser!.email) {
+        await _authService.updateEmail(_emailController.text.trim());
+      }
+
+      setState(() {
+        _isEditing = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Profile updated successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating profile: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _changeProfilePicture() {
+    //todo: method to change the picture
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Profile updated successfully'),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text('Profile picture update coming soon!')),
     );
   }
-void _changeProfilePicture() {
-    //todo: method to change the picture
-}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,7 +135,6 @@ void _changeProfilePicture() {
                       ),
                     ),
                   ),
-
                   Positioned(
                     top: 80,
                     left: 0,
@@ -106,7 +150,6 @@ void _changeProfilePicture() {
                       ),
                     ),
                   ),
-
                   Positioned(
                     top: 0,
                     right: -55,
@@ -123,15 +166,14 @@ void _changeProfilePicture() {
                 ],
               ),
             ),
-
             SizedBox(height: 20),
             Stack(
               children: [
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: Colors.grey[300],
-                  backgroundImage: AssetImage('pictures/login.png'), // TODO:replace with users actual image
-
+                  backgroundImage: AssetImage(
+                      'pictures/login.png'), // TODO:replace with users actual image
                 ),
                 Positioned(
                   bottom: 0,
@@ -157,15 +199,12 @@ void _changeProfilePicture() {
               ],
             ),
             SizedBox(height: 30),
-
-
-
             Expanded(
               child: SingleChildScrollView(
-                padding:  EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
-                  padding:  EdgeInsets.all(20),
-                  margin:  EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.all(20),
+                  margin: EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -201,10 +240,12 @@ void _changeProfilePicture() {
                           child: ElevatedButton(
                             onPressed: _saveChanges,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color.fromRGBO(120,
+                              backgroundColor: Color.fromRGBO(
+                                120,
                                 165,
                                 90,
-                                100,),
+                                100,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),

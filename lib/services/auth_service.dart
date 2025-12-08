@@ -90,4 +90,61 @@ class AuthService {
       return false;
     }
   }
+  // Update Display Name
+  Future<void> updateDisplayName(String name) async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      await user.updateDisplayName(name);
+      await _firestore.collection('users').doc(user.uid).update({
+        'displayName': name,
+      });
+    }
+  }
+
+// Update Email
+  Future<void> updateEmail(String email) async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      // NEW METHOD: Sends a verification email to the new address
+      await user.verifyBeforeUpdateEmail(email);
+
+      // Note: You might want to delay updating Firestore until they verify,
+      // but for now, this keeps your current logic:
+      await _firestore.collection('users').doc(user.uid).update({
+        'email': email,
+      });
+    }
+  }
+
+  // Re-authenticate
+  Future<void> reauthenticate(String currentPassword) async {
+    User? user = _auth.currentUser;
+    if (user != null && user.email != null) {
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+    }
+  }
+
+  // Update Password
+  Future<void> updatePassword(String newPassword) async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      await user.updatePassword(newPassword);
+    }
+  }
+
+  // Get User Details
+  Future<Map<String, dynamic>?> getUserDetails(String uid) async {
+    try {
+      DocumentSnapshot doc =
+          await _firestore.collection('users').doc(uid).get();
+      return doc.data() as Map<String, dynamic>?;
+    } catch (e) {
+      print("Error fetching user details: $e");
+      return null;
+    }
+  }
 }

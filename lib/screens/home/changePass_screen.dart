@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ChangepassScreen extends StatefulWidget {
   const ChangepassScreen({super.key});
@@ -11,9 +13,9 @@ class ChangepassScreen extends StatefulWidget {
 class _ChangepassScreenState extends State<ChangepassScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _newPassController = TextEditingController();
-  final TextEditingController _ConfirmNewPassController = TextEditingController();
-  bool _isEditing = false;
-
+  final TextEditingController _ConfirmNewPassController =
+      TextEditingController();
+  final AuthService _authService = AuthService();
 
   @override
   void dispose() {
@@ -22,7 +24,72 @@ class _ChangepassScreenState extends State<ChangepassScreen> {
     _ConfirmNewPassController.dispose();
     super.dispose();
   }
-  void updatePass(){}
+
+  Future<void> updatePass() async {
+    if (_newPassController.text.trim() !=
+        _ConfirmNewPassController.text.trim()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("New passwords do not match"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_newPassController.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Password must be at least 6 characters"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Re-authenticate first
+      await _authService.reauthenticate(_passwordController.text.trim());
+
+      // Update password
+      await _authService.updatePassword(_newPassController.text.trim());
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Password updated successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Clear fields
+      _passwordController.clear();
+      _newPassController.clear();
+      _ConfirmNewPassController.clear();
+      
+      // Optionally pop back
+      // Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      String message = "Error updating password";
+      if (e.code == 'wrong-password') {
+        message = "Current password is incorrect";
+      } else if (e.code == 'weak-password') {
+        message = "Password is too weak";
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +140,6 @@ class _ChangepassScreenState extends State<ChangepassScreen> {
                       ),
                     ),
                   ),
-
                   Positioned(
                     top: 80,
                     left: 0,
@@ -89,7 +155,6 @@ class _ChangepassScreenState extends State<ChangepassScreen> {
                       ),
                     ),
                   ),
-
                   Positioned(
                     top: 0,
                     right: -55,
@@ -106,15 +171,13 @@ class _ChangepassScreenState extends State<ChangepassScreen> {
                 ],
               ),
             ),
-
             SizedBox(height: 20),
-
             Expanded(
               child: SingleChildScrollView(
-                padding:  EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
-                  padding:  EdgeInsets.all(20),
-                  margin:  EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.all(20),
+                  margin: EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -146,30 +209,32 @@ class _ChangepassScreenState extends State<ChangepassScreen> {
                         icon: Icons.lock,
                       ),
                       SizedBox(height: 30),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: updatePass,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color.fromRGBO(120,
-                                165,
-                                90,
-                                100,),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: updatePass,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color.fromRGBO(
+                              120,
+                              165,
+                              90,
+                              100,
                             ),
-                            child: Text(
-                              'Update Password',
-                              style: GoogleFonts.dmSerifText(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Update Password',
+                            style: GoogleFonts.dmSerifText(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
+                      ),
                       SizedBox(height: 20),
                     ],
                   ),
@@ -222,6 +287,7 @@ class _ChangepassScreenState extends State<ChangepassScreen> {
           TextField(
             controller: controller,
             keyboardType: keyboardType,
+            obscureText: true, // Hide password
             style: GoogleFonts.dmSerifText(
               fontSize: 16,
               color: Colors.black,

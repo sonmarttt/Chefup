@@ -74,12 +74,35 @@ class _SavedScreenState extends State<SavedScreen> {
                                 ),
                               ),
                               SizedBox(width: 15),
-                              Text(
-                                "Hello, Chef!",
-                                style: GoogleFonts.dmSerifText(
-                                  fontSize: 20,
-                                  color: Colors.white,
-                                ),
+                              StreamBuilder<DocumentSnapshot>(
+                                stream: FirebaseAuth.instance.currentUser != null
+                                    ? FirebaseFirestore.instance
+                                        .collection('users')
+                                        .doc(FirebaseAuth.instance.currentUser!.uid)
+                                        .snapshots()
+                                    : null,
+                                builder: (context, snapshot) {
+                                  String displayName = "Chef";
+                                  if (FirebaseAuth.instance.currentUser == null) {
+                                      displayName = "Guest";
+                                  } else if (snapshot.hasData &&
+                                      snapshot.data != null &&
+                                      snapshot.data!.exists) {
+                                    final data = snapshot.data!.data()
+                                        as Map<String, dynamic>;
+                                    displayName = data['displayName'] ?? "Chef";
+                                  } else {
+                                     displayName = FirebaseAuth.instance.currentUser?.displayName ?? "Chef";
+                                  }
+
+                                  return Text(
+                                    "Hello, $displayName!",
+                                    style: GoogleFonts.dmSerifText(
+                                      fontSize: 20,
+                                      color: Colors.white,
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),

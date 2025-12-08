@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'profileDetails_screen.dart';
 import 'changePass_screen.dart';
 import 'package:chefup/screens/auth/login_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -116,23 +117,46 @@ class SettingsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      //TODO: Fetch user data dynamically to show the username and the pfp icon
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundImage: AssetImage('pictures/logo.png'),
-                          ),
-                          SizedBox(width: 15),
-                          Text(
-                            "Anabelle",
-                            style: GoogleFonts.dmSerifText(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
+                      child: StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseAuth.instance.currentUser != null
+                            ? FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .snapshots()
+                            : null,
+                        builder: (context, snapshot) {
+                          String displayName = "Guest";
+                          if (snapshot.hasData &&
+                              snapshot.data != null &&
+                              snapshot.data!.exists) {
+                            final data =
+                                snapshot.data!.data() as Map<String, dynamic>;
+                            displayName = data['displayName'] ?? "Chef";
+                          } else if (FirebaseAuth.instance.currentUser !=
+                              null) {
+                             displayName = FirebaseAuth.instance.currentUser?.displayName ?? "Chef";
+                          }
+
+
+                          return Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 30,
+                                backgroundImage:
+                                    AssetImage('pictures/logo.png'),
+                              ),
+                              SizedBox(width: 15),
+                              Text(
+                                displayName,
+                                style: GoogleFonts.dmSerifText(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
 
