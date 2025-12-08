@@ -20,6 +20,8 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   final RecipeService _recipeService = RecipeService();
   final AuthService _authService = AuthService();
   bool _isAdmin = false;
+  String _searchQuery = "";
+  String _selectedCategory = "All";
 
   @override
   void initState() {
@@ -44,6 +46,8 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   @override
   Widget build(BuildContext context) {
     log('discovery building ');
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5), // Light grey background
       body: SafeArea(
@@ -53,7 +57,6 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
             Container(
               height: 190,
               width: MediaQuery.of(context).size.width,
-
               decoration: BoxDecoration(
                 color: Color.fromRGBO(24, 25, 28, 100),
                 borderRadius: BorderRadius.only(
@@ -86,7 +89,6 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                 },
                                 child: CircleAvatar(
                                   radius: 20,
-                                  //TODO: replace with user profile picture
                                   backgroundImage: AssetImage(
                                     'pictures/logo.png',
                                   ), // Placeholder
@@ -94,11 +96,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                               ),
                               SizedBox(width: 15),
                               Text(
-                                //TODO: replace with user's name
                                 "Hello, Chef!",
                                 style: GoogleFonts.dmSerifText(
                                   fontSize: 20,
-                                  //fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                               ),
@@ -131,6 +131,11 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                   ],
                                 ),
                                 child: TextField(
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _searchQuery = value;
+                                    });
+                                  },
                                   textAlign: TextAlign.left,
                                   textAlignVertical: TextAlignVertical.center,
                                   decoration: InputDecoration(
@@ -162,7 +167,6 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                     border: InputBorder.none,
                                     contentPadding: EdgeInsets.symmetric(
                                       horizontal: 20,
-                                      //vertical: 15,
                                     ),
                                   ),
                                 ),
@@ -172,7 +176,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                         ),
                         SizedBox(height: 20),
 
-                        // Tabs (Visual only for now)
+                        // Tabs
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           padding: EdgeInsets.only(
@@ -182,12 +186,38 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                           ),
                           child: Row(
                             children: [
-                              //Todo: fetch the categories from firebase
-                              _buildTab("All", true),
-                              _buildTab("Soup", false),
-                              _buildTab("Drinks", false),
-                              _buildTab("Baked", false),
-                              _buildTab("Cooked", false),
+                              _buildTab("All", _selectedCategory == "All", () {
+                                setState(() {
+                                  _selectedCategory = "All";
+                                });
+                              }),
+                              _buildTab("Soup", _selectedCategory == "Soup", () {
+                                setState(() {
+                                  _selectedCategory = "Soup";
+                                });
+                              }),
+                              _buildTab("Drinks", _selectedCategory == "Drinks",
+                                      () {
+                                    setState(() {
+                                      _selectedCategory = "Drinks";
+                                    });
+                                  }),
+                              _buildTab("Baked", _selectedCategory == "Baked", () {
+                                setState(() {
+                                  _selectedCategory = "Baked";
+                                });
+                              }),
+                              _buildTab("Cooked", _selectedCategory == "Cooked",
+                                      () {
+                                    setState(() {
+                                      _selectedCategory = "Cooked";
+                                    });
+                                  }),
+                              _buildTab("Beef", _selectedCategory == "Beef", () {
+                                setState(() {
+                                  _selectedCategory = "Beef";
+                                });
+                              }),
                             ],
                           ),
                         ),
@@ -215,146 +245,114 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
 
             // Grid of Recipes
             Expanded(
-              child: StreamBuilder<List<RecipeModel>>(
-                stream: _recipeService.getAllRecipes(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text("Error loading recipes"));
-                  }
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
+              child: StreamBuilder<List<String>>(
+                stream: user != null && !user.isAnonymous
+                    ? _recipeService.getSavedRecipeIds(user.uid)
+                    : Stream.value([]),
+                builder: (context, savedSnapshot) {
+                  final savedIds = (savedSnapshot.data ?? []).toSet();
 
-                  final recipes = snapshot.data ?? [];
+                  return StreamBuilder<List<RecipeModel>>(
+                    stream: _recipeService.getAllRecipes(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(child: Text("Error loading recipes"));
+                      }
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      }
 
-                  if (recipes.isEmpty) {
-                    return GridView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.75,
-                        crossAxisSpacing: 15,
-                        mainAxisSpacing: 15,
-                      ),
-                      itemCount: recipes.length,
-                      itemBuilder: (context, index) {
-                        final recipe = recipes[index];
-                        return _buildRecipe(
-                          //fetch the information from firebase
-                          recipe.title,
-                          0,
-                          recipe.imageUrl,
-                          isNetworkImage: true,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    RecipeDetailsScreen(recipe: recipe),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  }
+                      var recipes = snapshot.data ?? [];
 
-                  return GridView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.75,
-                      crossAxisSpacing: 15,
-                      mainAxisSpacing: 15,
-                    ),
-                    //fetches from database
-                    itemCount: recipes.length,
-                    itemBuilder: (context, index) {
-                      final recipe = recipes[index];
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  RecipeDetailsScreen(recipe: recipe),
+                      // Apply Client-Side Filtering
+                      // 1. Category
+                      if (_selectedCategory != "All") {
+                        recipes = recipes
+                            .where((r) => r.category == _selectedCategory)
+                            .toList();
+                      }
+
+                      // 2. Search
+                      if (_searchQuery.isNotEmpty) {
+                        final q = _searchQuery.toLowerCase().trim();
+                        recipes = recipes
+                            .where(
+                                (r) => r.title.toLowerCase().contains(q))
+                            .toList();
+                      }
+
+                      if (recipes.isEmpty) {
+                        return Center(
+                          child: Text(
+                            "No recipes found",
+                            style: GoogleFonts.dmSerifText(
+                              fontSize: 18,
+                              color: Colors.grey,
                             ),
+                          ),
+                        );
+                      }
+
+                      return GridView.builder(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.75,
+                          crossAxisSpacing: 15,
+                          mainAxisSpacing: 15,
+                        ),
+                        itemCount: recipes.length,
+                        itemBuilder: (context, index) {
+                          final recipe = recipes[index];
+                          final isSaved = savedIds.contains(recipe.id);
+
+                          return _buildRecipe(
+                            recipe.title,
+                            0, // Placeholder for likes count
+                            recipe.imageUrl,
+                            isNetworkImage: true,
+                            isSaved: isSaved,
+                            onSave: () async {
+                              final currentUser =
+                                  FirebaseAuth.instance.currentUser;
+                              if (currentUser == null ||
+                                  currentUser.isAnonymous) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        "Please log in to save recipes."),
+                                  ),
+                                );
+                                return;
+                              }
+                              try {
+                                if (isSaved) {
+                                  await _recipeService.unsaveRecipe(
+                                      currentUser.uid, recipe.id);
+                                } else {
+                                  await _recipeService.saveRecipe(
+                                      currentUser.uid, recipe.id);
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content:
+                                        Text("Error updating save: $e")),
+                                  );
+                                }
+                              }
+                            },
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      RecipeDetailsScreen(recipe: recipe),
+                                ),
+                              );
+                            },
                           );
                         },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(20),
-                                  ),
-                                  child: Image.network(
-                                    recipe.imageUrl,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            Container(
-                                              color: Colors.grey[300],
-                                              child: Icon(Icons.broken_image),
-                                            ),
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      recipe.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.dmSerifText(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          "${recipe.cookTimeMinutes} min",
-                                          style: GoogleFonts.dmSerifText(
-                                            fontSize: 12,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        Icon(Icons.favorite_border, size: 16),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       );
                     },
                   );
@@ -367,32 +365,37 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     );
   }
 
-  Widget _buildTab(String text, bool isSelected) {
-    return Container(
-      height: 35,
-      margin: EdgeInsets.only(right: 15),
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 7),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFEAEAEA) : Colors.grey[800],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: GoogleFonts.dmSerifText(
-          color: isSelected ? Colors.black : Colors.white,
-          fontWeight: FontWeight.bold,
+  Widget _buildTab(String text, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 35,
+        margin: EdgeInsets.only(right: 15),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFEAEAEA) : Colors.grey[800],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          text,
+          style: GoogleFonts.dmSerifText(
+            color: isSelected ? Colors.black : Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
   }
 
   Widget _buildRecipe(
-    String name,
-    int likes,
-    String imagePath, {
-    VoidCallback? onTap,
-    bool isNetworkImage = false,
-  }) {
+      String name,
+      int likes,
+      String imagePath, {
+        VoidCallback? onTap,
+        bool isNetworkImage = false,
+        bool isSaved = false,
+        VoidCallback? onSave,
+      }) {
     final content = Container(
       height: 250,
       width: 250,
@@ -420,42 +423,44 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                 ),
                 child: isNetworkImage
                     ? Image.network(
-                        imagePath,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          height: 180,
-                          color: Colors.grey[300],
-                          child: Icon(Icons.broken_image),
-                        ),
-                      )
+                  imagePath,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 180,
+                    color: Colors.grey[300],
+                    child: Icon(Icons.broken_image),
+                  ),
+                )
                     : Image.asset(
-                        imagePath,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          height: 180,
-                          color: Colors.grey[300],
-                          child: Icon(Icons.broken_image),
-                        ),
-                      ),
+                  imagePath,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 180,
+                    color: Colors.grey[300],
+                    child: Icon(Icons.broken_image),
+                  ),
+                ),
               ),
               Positioned(
                 top: 8,
                 right: 8,
                 child: ElevatedButton(
-                  onPressed: () {
-                    //TODO: add in the saved
-                  },
+                  onPressed: onSave,
                   style: ElevatedButton.styleFrom(
                     shape: CircleBorder(),
                     padding: EdgeInsets.all(8),
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,
                   ),
-                  child: Icon(Icons.bookmark, color: Colors.black, size: 20),
+                  child: Icon(
+                    isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    color: Colors.black,
+                    size: 20,
+                  ),
                 ),
               ),
             ],
