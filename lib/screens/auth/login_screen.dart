@@ -6,6 +6,7 @@ import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import 'welcome_screen.dart';
 import '../main_wrapper.dart';
+import '../admin/admin_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,11 +38,20 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MainWrapper()),
-        );
+        // Check for Admin
+        if (_emailController.text.trim() == "admin@chefup.com") {
+           Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainWrapper()),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
