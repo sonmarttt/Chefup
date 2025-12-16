@@ -305,10 +305,11 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
                           return GestureDetector(
                             onTap: () async {
                               if (user == null || user.isAnonymous) {
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                     content: Text(
-                                      "Please log in to save recipes.",
+                                      "Please log in to save recipes",
                                     ),
                                   ),
                                 );
@@ -321,17 +322,34 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
                                     user.uid,
                                     widget.recipe.id,
                                   );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Removed from saved"),
+                                      ),
+                                    );
+                                  }
                                 } else {
                                   await _recipeService.saveRecipe(
                                     user.uid,
                                     widget.recipe.id,
                                   );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Recipe saved"),
+                                      ),
+                                    );
+                                  }
                                 }
                               } catch (e) {
                                 if (context.mounted) {
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text("Error updating save: $e"),
+                                    const SnackBar(
+                                      content: Text("Failed to save. Try again."),
                                     ),
                                   );
                                 }
