@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'setting_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FruitScreen extends StatefulWidget {
   const FruitScreen({super.key});
@@ -116,13 +118,48 @@ class _FruitScreenState extends State<FruitScreen> {
                                 ),
                               ),
                               SizedBox(width: 15),
-                              Text(
-                                "Hello, Chef!",
-                                style: GoogleFonts.dmSerifText(
-                                  fontSize: 20,
-                                  //fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                              StreamBuilder<DocumentSnapshot>(
+                                stream:
+                                    FirebaseAuth.instance.currentUser != null
+                                    ? FirebaseFirestore.instance
+                                          .collection('users')
+                                          .doc(
+                                            FirebaseAuth
+                                                .instance
+                                                .currentUser!
+                                                .uid,
+                                          )
+                                          .snapshots()
+                                    : null,
+                                builder: (context, snapshot) {
+                                  String displayName = "Chef";
+                                  if (FirebaseAuth.instance.currentUser ==
+                                      null) {
+                                    displayName = "Guest";
+                                  } else if (snapshot.hasData &&
+                                      snapshot.data != null &&
+                                      snapshot.data!.exists) {
+                                    final data =
+                                        snapshot.data!.data()
+                                            as Map<String, dynamic>;
+                                    displayName = data['displayName'] ?? "Chef";
+                                  } else {
+                                    displayName =
+                                        FirebaseAuth
+                                            .instance
+                                            .currentUser
+                                            ?.displayName ??
+                                        "Chef";
+                                  }
+
+                                  return Text(
+                                    "Hello, $displayName!",
+                                    style: GoogleFonts.dmSerifText(
+                                      fontSize: 20,
+                                      color: Colors.white,
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),

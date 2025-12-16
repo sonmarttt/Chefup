@@ -77,24 +77,37 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                               ),
                               SizedBox(width: 15),
                               StreamBuilder<DocumentSnapshot>(
-                                stream: FirebaseAuth.instance.currentUser != null
+                                stream:
+                                    FirebaseAuth.instance.currentUser != null
                                     ? FirebaseFirestore.instance
-                                        .collection('users')
-                                        .doc(FirebaseAuth.instance.currentUser!.uid)
-                                        .snapshots()
+                                          .collection('users')
+                                          .doc(
+                                            FirebaseAuth
+                                                .instance
+                                                .currentUser!
+                                                .uid,
+                                          )
+                                          .snapshots()
                                     : null,
                                 builder: (context, snapshot) {
                                   String displayName = "Chef";
-                                  if (FirebaseAuth.instance.currentUser == null) {
-                                      displayName = "Guest";
+                                  if (FirebaseAuth.instance.currentUser ==
+                                      null) {
+                                    displayName = "Guest";
                                   } else if (snapshot.hasData &&
                                       snapshot.data != null &&
                                       snapshot.data!.exists) {
-                                    final data = snapshot.data!.data()
-                                        as Map<String, dynamic>;
+                                    final data =
+                                        snapshot.data!.data()
+                                            as Map<String, dynamic>;
                                     displayName = data['displayName'] ?? "Chef";
                                   } else {
-                                     displayName = FirebaseAuth.instance.currentUser?.displayName ?? "Chef";
+                                    displayName =
+                                        FirebaseAuth
+                                            .instance
+                                            .currentUser
+                                            ?.displayName ??
+                                        "Chef";
                                   }
 
                                   return Text(
@@ -179,7 +192,6 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                           padding: const EdgeInsets.only(left: 10, right: 10),
                           child: Row(
                             children: [
-                              
                               GestureDetector(
                                 onTap: () {
                                   Navigator.push(
@@ -329,19 +341,6 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                                       ),
                                     ),
                                     SizedBox(height: 5),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          "${recipe.cookTimeMinutes}",
-                                          style: GoogleFonts.dmSerifText(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Icon(Icons.favorite, size: 16),
-                                      ],
-                                    ),
                                   ],
                                 ),
                               ),

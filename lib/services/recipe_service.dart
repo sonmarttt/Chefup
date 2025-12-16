@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/recipe_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RecipeService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -31,10 +32,28 @@ class RecipeService {
   // Create Recipe
   Future<void> createRecipe(RecipeModel recipe) async {
     try {
-      // Create a new document ref to get an ID
-      DocumentReference docRef = _firestore.collection('recipes').doc();
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception("User not logged in");
+      String authorName = "Chef";
 
-      // Update the recipe with the generated ID
+      try {
+        final userDoc = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        if (userDoc.exists && userDoc.data() != null) {
+          authorName =
+              userDoc.data()!['displayName'] ?? user.displayName ?? "Chef";
+        } else {
+          // Fallback to Auth displayName
+          authorName = user.displayName ?? "Chef";
+        }
+      } catch (e) {
+        print("Error fetching user name: $e");
+        authorName = user.displayName ?? "Chef";
+      }
+
+      DocumentReference docRef = _firestore.collection('recipes').doc();
       RecipeModel newRecipe = RecipeModel(
         id: docRef.id,
         title: recipe.title,
@@ -45,7 +64,7 @@ class RecipeService {
         cookTimeMinutes: recipe.cookTimeMinutes,
         imageUrl: recipe.imageUrl,
         authorId: recipe.authorId,
-        authorName: recipe.authorName,
+        authorName: authorName,
         createdAt: recipe.createdAt,
         updatedAt: recipe.updatedAt,
       );
@@ -63,10 +82,10 @@ class RecipeService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return RecipeModel.fromMap(doc.data(), doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return RecipeModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
 
   // Get Recipes by Author
@@ -77,11 +96,12 @@ class RecipeService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return RecipeModel.fromMap(doc.data(), doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return RecipeModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
+
   // Save Recipe
   Future<void> saveRecipe(String uid, String recipeId) async {
     try {
@@ -90,9 +110,7 @@ class RecipeService {
           .doc(uid)
           .collection('savedRecipes')
           .doc(recipeId)
-          .set({
-        'savedAt': FieldValue.serverTimestamp(),
-      });
+          .set({'savedAt': FieldValue.serverTimestamp()});
     } catch (e) {
       rethrow;
     }
@@ -120,7 +138,15 @@ class RecipeService {
         .collection('savedRecipes')
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => doc.id).toList();
-    });
+          return snapshot.docs.map((doc) => doc.id).toList();
+        });
+  }
+
+  Future<void> updateRecipe(String recipeId, Map<String, dynamic> data) async {
+    await _firestore.collection('recipes').doc(recipeId).update(data);
+  }
+
+  Future<void> deleteRecipe(String recipeId) async {
+    await _firestore.collection('recipes').doc(recipeId).delete();
   }
 }

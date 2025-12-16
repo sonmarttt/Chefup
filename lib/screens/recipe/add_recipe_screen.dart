@@ -24,7 +24,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final TextEditingController _directionsController = TextEditingController();
 
   String _selectedCategory = 'Chicken'; // Default
-  final List<String> _categories = ['Chicken', 'Soup', 'Drinks', 'Baked', 'Beef', 'Seafood', 'Vegetarian'];
+  final List<String> _categories = [
+    'Chicken',
+    'Soup',
+    'Drinks',
+    'Baked',
+    'Beef',
+    'Seafood',
+    'Vegetarian',
+  ];
 
   XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
@@ -32,7 +40,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   bool _isLoading = false;
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       setState(() {
         _imageFile = pickedFile;
@@ -53,9 +63,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     }
 
     if (_imageFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please upload an image')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please upload an image')));
       return;
     }
 
@@ -65,15 +75,24 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
     try {
       // Upload Image (pass XFile directly)
-      String imageUrl = await _recipeService.uploadRecipeImage(_imageFile!, user.uid);
+      String imageUrl = await _recipeService.uploadRecipeImage(
+        _imageFile!,
+        user.uid,
+      );
 
       // Create Recipe Model
       RecipeModel newRecipe = RecipeModel(
-        id: '', // Will be generated
+        id: '',
         title: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
-        ingredients: _ingredientsController.text.split('\n').where((s) => s.isNotEmpty).toList(),
-        steps: _directionsController.text.split('\n').where((s) => s.isNotEmpty).toList(),
+        ingredients: _ingredientsController.text
+            .split('\n')
+            .where((s) => s.isNotEmpty)
+            .toList(),
+        steps: _directionsController.text
+            .split('\n')
+            .where((s) => s.isNotEmpty)
+            .toList(),
         category: _selectedCategory,
         cookTimeMinutes: int.tryParse(_timeController.text) ?? 0,
         imageUrl: imageUrl,
@@ -87,15 +106,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
       if (mounted) {
         Navigator.pop(context); // Go back to My Posts
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Recipe posted successfully!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Recipe posted successfully!')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) {
@@ -127,7 +146,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text("My Posts-Add", style: GoogleFonts.dmSerifText(color: Colors.grey)),
+        title: Text(
+          "My Posts-Add",
+          style: GoogleFonts.dmSerifText(color: Colors.grey),
+        ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20),
@@ -147,27 +169,33 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.grey[800]!),
                     image: imageProvider != null
-                        ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
+                        ? DecorationImage(
+                            image: imageProvider,
+                            fit: BoxFit.cover,
+                          )
                         : null,
                   ),
                   child: _imageFile == null
                       ? Center(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: const Color.fromRGBO(120, 165, 90, 100),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        "Upload An Image",
-                        style: GoogleFonts.dmSerifText(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  )
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color.fromRGBO(120, 165, 90, 100),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              "Upload An Image",
+                              style: GoogleFonts.dmSerifText(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        )
                       : null,
                 ),
               ),
@@ -187,13 +215,25 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               _buildTextField("Cooking Time:", _timeController, isNumber: true),
 
               // Description
-              _buildTextField("Description:", _descriptionController, maxLines: 3),
+              _buildTextField(
+                "Description:",
+                _descriptionController,
+                maxLines: 3,
+              ),
 
               // Ingredients
-              _buildTextField("Ingredients:", _ingredientsController, maxLines: 5),
+              _buildTextField(
+                "Ingredients:",
+                _ingredientsController,
+                maxLines: 5,
+              ),
 
               // Directions
-              _buildTextField("Directions:", _directionsController, maxLines: 5),
+              _buildTextField(
+                "Directions:",
+                _directionsController,
+                maxLines: 5,
+              ),
 
               SizedBox(height: 30),
 
@@ -210,12 +250,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   child: _isLoading
                       ? CircularProgressIndicator(color: Colors.white)
                       : Text(
-                    "Post",
-                    style: GoogleFonts.dmSerifText(
-                      color: Colors.white,
-                      fontSize: 24,
-                    ),
-                  ),
+                          "Post",
+                          style: GoogleFonts.dmSerifText(
+                            color: Colors.white,
+                            fontSize: 24,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -225,7 +265,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, bool isNumber = false}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+    bool isNumber = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15.0),
       child: Row(
@@ -246,7 +291,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             child: TextFormField(
               controller: controller,
               maxLines: maxLines,
-              keyboardType: isNumber ? TextInputType.number : TextInputType.multiline,
+              keyboardType: isNumber
+                  ? TextInputType.number
+                  : TextInputType.multiline,
               style: TextStyle(color: Colors.white),
               validator: (val) => val!.isEmpty ? 'Required' : null,
               decoration: InputDecoration(
@@ -258,7 +305,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 10,
+                ),
               ),
             ),
           ),
@@ -267,7 +317,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
-  Widget _buildDropdownField(String label, String value, Function(String?) onChanged) {
+  Widget _buildDropdownField(
+    String label,
+    String value,
+    Function(String?) onChanged,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15.0),
       child: Row(

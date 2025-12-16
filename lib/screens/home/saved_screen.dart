@@ -75,24 +75,37 @@ class _SavedScreenState extends State<SavedScreen> {
                               ),
                               SizedBox(width: 15),
                               StreamBuilder<DocumentSnapshot>(
-                                stream: FirebaseAuth.instance.currentUser != null
+                                stream:
+                                    FirebaseAuth.instance.currentUser != null
                                     ? FirebaseFirestore.instance
-                                        .collection('users')
-                                        .doc(FirebaseAuth.instance.currentUser!.uid)
-                                        .snapshots()
+                                          .collection('users')
+                                          .doc(
+                                            FirebaseAuth
+                                                .instance
+                                                .currentUser!
+                                                .uid,
+                                          )
+                                          .snapshots()
                                     : null,
                                 builder: (context, snapshot) {
                                   String displayName = "Chef";
-                                  if (FirebaseAuth.instance.currentUser == null) {
-                                      displayName = "Guest";
+                                  if (FirebaseAuth.instance.currentUser ==
+                                      null) {
+                                    displayName = "Guest";
                                   } else if (snapshot.hasData &&
                                       snapshot.data != null &&
                                       snapshot.data!.exists) {
-                                    final data = snapshot.data!.data()
-                                        as Map<String, dynamic>;
+                                    final data =
+                                        snapshot.data!.data()
+                                            as Map<String, dynamic>;
                                     displayName = data['displayName'] ?? "Chef";
                                   } else {
-                                     displayName = FirebaseAuth.instance.currentUser?.displayName ?? "Chef";
+                                    displayName =
+                                        FirebaseAuth
+                                            .instance
+                                            .currentUser
+                                            ?.displayName ??
+                                        "Chef";
                                   }
 
                                   return Text(
@@ -243,8 +256,10 @@ class _SavedScreenState extends State<SavedScreen> {
                       }
 
                       return ListView.builder(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
                         itemCount: savedRecipes.length,
                         itemBuilder: (context, index) {
                           final recipe = savedRecipes[index];
@@ -355,29 +370,6 @@ class _SavedScreenState extends State<SavedScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            likes.toString(),
-                            style: GoogleFonts.dmSerifText(
-                              fontSize: 14,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          SizedBox(width: 4),
-                          GestureDetector(
-                            onTap: () {
-                              // Handle like action
-                              print('liked');
-                            },
-                            child: Icon(
-                              Icons.favorite,
-                              color: Colors.black,
-                              size: 18,
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),

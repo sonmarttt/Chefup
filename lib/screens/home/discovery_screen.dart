@@ -8,6 +8,7 @@ import 'dart:developer';
 import 'setting_screen.dart';
 import '../../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../auth/login_screen.dart';
 
 class DiscoveryScreen extends StatefulWidget {
   const DiscoveryScreen({super.key});
@@ -43,13 +44,73 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     }
   }
 
+  void _showLoginPrompt(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            "Login Required",
+            style: GoogleFonts.dmSerifText(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            "You need to be logged in to access this feature.",
+            style: GoogleFonts.dmSerifText(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                "Cancel",
+                style: GoogleFonts.dmSerifText(
+                  color: Colors.grey,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromRGBO(120, 165, 90, 100),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                "Login",
+                style: GoogleFonts.dmSerifText(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     log('discovery building ');
     final user = FirebaseAuth.instance.currentUser;
+    final isGuest = user == null || user.isAnonymous;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // Light grey background
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: Column(
           children: [
@@ -80,12 +141,16 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                             children: [
                               GestureDetector(
                                 onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => SettingsScreen(),
-                                    ),
-                                  );
+                                  if (isGuest) {
+                                    _showLoginPrompt(context);
+                                  } else {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => SettingsScreen(),
+                                      ),
+                                    );
+                                  }
                                 },
                                 child: CircleAvatar(
                                   radius: 20,
@@ -95,12 +160,48 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                 ),
                               ),
                               SizedBox(width: 15),
-                              Text(
-                                "Hello, Chef!",
-                                style: GoogleFonts.dmSerifText(
-                                  fontSize: 20,
-                                  color: Colors.white,
-                                ),
+                              StreamBuilder<DocumentSnapshot>(
+                                stream:
+                                    FirebaseAuth.instance.currentUser != null
+                                    ? FirebaseFirestore.instance
+                                          .collection('users')
+                                          .doc(
+                                            FirebaseAuth
+                                                .instance
+                                                .currentUser!
+                                                .uid,
+                                          )
+                                          .snapshots()
+                                    : null,
+                                builder: (context, snapshot) {
+                                  String displayName = "Chef";
+                                  if (FirebaseAuth.instance.currentUser ==
+                                      null) {
+                                    displayName = "Guest";
+                                  } else if (snapshot.hasData &&
+                                      snapshot.data != null &&
+                                      snapshot.data!.exists) {
+                                    final data =
+                                        snapshot.data!.data()
+                                            as Map<String, dynamic>;
+                                    displayName = data['displayName'] ?? "Chef";
+                                  } else {
+                                    displayName =
+                                        FirebaseAuth
+                                            .instance
+                                            .currentUser
+                                            ?.displayName ??
+                                        "Chef";
+                                  }
+
+                                  return Text(
+                                    "Hello, $displayName!",
+                                    style: GoogleFonts.dmSerifText(
+                                      fontSize: 20,
+                                      color: Colors.white,
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -191,33 +292,52 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                   _selectedCategory = "All";
                                 });
                               }),
-                              _buildTab("Soup", _selectedCategory == "Soup", () {
-                                setState(() {
-                                  _selectedCategory = "Soup";
-                                });
-                              }),
-                              _buildTab("Drinks", _selectedCategory == "Drinks",
-                                      () {
-                                    setState(() {
-                                      _selectedCategory = "Drinks";
-                                    });
-                                  }),
-                              _buildTab("Baked", _selectedCategory == "Baked", () {
-                                setState(() {
-                                  _selectedCategory = "Baked";
-                                });
-                              }),
-                              _buildTab("Cooked", _selectedCategory == "Cooked",
-                                      () {
-                                    setState(() {
-                                      _selectedCategory = "Cooked";
-                                    });
-                                  }),
-                              _buildTab("Beef", _selectedCategory == "Beef", () {
-                                setState(() {
-                                  _selectedCategory = "Beef";
-                                });
-                              }),
+                              _buildTab(
+                                "Soup",
+                                _selectedCategory == "Soup",
+                                () {
+                                  setState(() {
+                                    _selectedCategory = "Soup";
+                                  });
+                                },
+                              ),
+                              _buildTab(
+                                "Drinks",
+                                _selectedCategory == "Drinks",
+                                () {
+                                  setState(() {
+                                    _selectedCategory = "Drinks";
+                                  });
+                                },
+                              ),
+                              _buildTab(
+                                "Baked",
+                                _selectedCategory == "Baked",
+                                () {
+                                  setState(() {
+                                    _selectedCategory = "Baked";
+                                  });
+                                },
+                              ),
+                              _buildTab(
+                                "Cooked",
+                                _selectedCategory == "Cooked",
+                                () {
+                                  setState(() {
+                                    _selectedCategory = "Cooked";
+                                  });
+                                },
+                              ),
+                              _buildTab(
+                                "Beef",
+                                _selectedCategory == "Beef",
+                                () {
+                                  setState(() {
+                                    _selectedCategory = "Beef";
+                                  });
+                                },
+                              ),
+                              SizedBox(width: 200),
                             ],
                           ),
                         ),
@@ -276,8 +396,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                       if (_searchQuery.isNotEmpty) {
                         final q = _searchQuery.toLowerCase().trim();
                         recipes = recipes
-                            .where(
-                                (r) => r.title.toLowerCase().contains(q))
+                            .where((r) => r.title.toLowerCase().contains(q))
                             .toList();
                       }
 
@@ -313,32 +432,28 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                             isNetworkImage: true,
                             isSaved: isSaved,
                             onSave: () async {
-                              final currentUser =
-                                  FirebaseAuth.instance.currentUser;
-                              if (currentUser == null ||
-                                  currentUser.isAnonymous) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        "Please log in to save recipes."),
-                                  ),
-                                );
+                              if (isGuest) {
+                                _showLoginPrompt(context);
                                 return;
                               }
                               try {
                                 if (isSaved) {
                                   await _recipeService.unsaveRecipe(
-                                      currentUser.uid, recipe.id);
+                                    user!.uid,
+                                    recipe.id,
+                                  );
                                 } else {
                                   await _recipeService.saveRecipe(
-                                      currentUser.uid, recipe.id);
+                                    user!.uid,
+                                    recipe.id,
+                                  );
                                 }
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                        content:
-                                        Text("Error updating save: $e")),
+                                      content: Text("Error updating save: $e"),
+                                    ),
                                   );
                                 }
                               }
@@ -388,14 +503,14 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   }
 
   Widget _buildRecipe(
-      String name,
-      int likes,
-      String imagePath, {
-        VoidCallback? onTap,
-        bool isNetworkImage = false,
-        bool isSaved = false,
-        VoidCallback? onSave,
-      }) {
+    String name,
+    int likes,
+    String imagePath, {
+    VoidCallback? onTap,
+    bool isNetworkImage = false,
+    bool isSaved = false,
+    VoidCallback? onSave,
+  }) {
     final content = Container(
       height: 250,
       width: 250,
@@ -423,27 +538,27 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                 ),
                 child: isNetworkImage
                     ? Image.network(
-                  imagePath,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 180,
-                    color: Colors.grey[300],
-                    child: Icon(Icons.broken_image),
-                  ),
-                )
+                        imagePath,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 180,
+                          color: Colors.grey[300],
+                          child: Icon(Icons.broken_image),
+                        ),
+                      )
                     : Image.asset(
-                  imagePath,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 180,
-                    color: Colors.grey[300],
-                    child: Icon(Icons.broken_image),
-                  ),
-                ),
+                        imagePath,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 180,
+                          color: Colors.grey[300],
+                          child: Icon(Icons.broken_image),
+                        ),
+                      ),
               ),
               Positioned(
                 top: 8,
@@ -481,21 +596,6 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                   ),
                 ),
                 SizedBox(width: 8),
-                Text(
-                  likes.toString(),
-                  style: GoogleFonts.dmSerifText(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(width: 4),
-                GestureDetector(
-                  onTap: () {
-                    // Handle like action
-                    print('liked');
-                  },
-                  child: Icon(Icons.favorite, color: Colors.black, size: 20),
-                ),
               ],
             ),
           ),
